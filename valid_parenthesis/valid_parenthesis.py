@@ -1,9 +1,9 @@
 
 class Solution: 
     
-    def valid_parenthesis(s:str) -> bool: 
+    def valid_parenthesis(self, s:str) -> bool: 
 
-        bracket_map = { '[': ']', '{':'}', '(': ')'}
+        bracket_map = { ')': '(', '}': '{', ']': '[' }
         stack = []
         for char in s: 
             if char in bracket_map: 
@@ -15,3 +15,6 @@ class Solution:
                 stack.append(char)
 
         return True if not stack else False
+
+c = Solution()
+print(c.valid_parenthesis("({})[]"))
