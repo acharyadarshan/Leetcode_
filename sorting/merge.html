@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merge Sort Animation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            color: #4fbdba;
+            margin-bottom: 30px;
+        }
+
+        .controls {
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: center;
+        }
+
+        button {
+            background: #4fbdba;
+            color: #1a1a2e;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #7ec8e3;
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .main-container {
+            display: flex;
+            gap: 40px;
+            width: 100%;
+            max-width: 1400px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .tree-container {
+            background: #0f0f1e;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            flex: 1;
+            min-width: 500px;
+        }
+
+        .call-stack-container {
+            background: #0f0f1e;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            width: 350px;
+        }
+
+        .speed-control {
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        input[type="range"] {
+            width: 200px;
+        }
+
+        .tree-node {
+            position: absolute;
+            background: #2d2d44;
+            border: 3px solid #4fbdba;
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-size: 18px;
+            font-weight: bold;
+            transition: all 0.5s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .tree-node.active {
+            background: #4fbdba;
+            color: #1a1a2e;
+            box-shadow: 0 0 20px #4fbdba;
+            transform: scale(1.1);
+        }
+
+        .tree-node.completed {
+            background: #2ecc71;
+            border-color: #27ae60;
+        }
+
+        .tree-node .variables {
+            font-size: 12px;
+            margin-top: 5px;
+            color: #ffd700;
+        }
+
+        .connection {
+            position: absolute;
+            height: 2px;
+            background: #4fbdba;
+            transform-origin: left center;
+            opacity: 0.5;
+        }
+
+        .call-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .stack-frame {
+            background: #2d2d44;
+            border: 2px solid #666;
+            border-radius: 6px;
+            padding: 15px;
+            transition: all 0.3s;
+        }
+
+        .stack-frame.active {
+            border-color: #4fbdba;
+            background: #3d3d55;
+            box-shadow: 0 0 15px rgba(79, 189, 186, 0.5);
+        }
+
+        .stack-frame h3 {
+            margin: 0 0 10px 0;
+            color: #4fbdba;
+            font-size: 16px;
+        }
+
+        .stack-frame .var {
+            margin: 5px 0;
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        .stack-frame .var span {
+            color: #ffd700;
+        }
+
+        .explanation {
+            background: #2d2d44;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .explanation code {
+            background: #1a1a2e;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #4fbdba;
+            font-family: monospace;
+        }
+
+        #tree-svg {
+            width: 100%;
+            height: 400px;
+            position: relative;
+        }
+
+        .merge-animation {
+            position: absolute;
+            background: #e74c3c;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-weight: bold;
+            opacity: 0;
+            transition: all 0.5s;
+        }
+
+        .merge-animation.show {
+            opacity: 1;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .pulsing {
+            animation: pulse 1s infinite;
+        }
+    </style>
+</head>
+<body>
+    <h1>Merge Sort Recursion Visualizer</h1>
+    
+    <div class="controls">
+        <button onclick="stepForward()" id="stepBtn">Step Forward</button>
+    </div>
+
+    <div class="main-container">
+        <div class="tree-container">
+            <h2>Recursion Tree</h2>
+            <div id="tree-svg"></div>
+            <div class="merge-animation" id="mergeDisplay"></div>
+        </div>
+
+        <div class="call-stack-container">
+            <h2>Call Stack</h2>
+            <div class="call-stack" id="callStack"></div>
+        </div>
+    </div>
+
+    <div class="explanation" id="explanation">
+        Click "Start Animation" to see how merge sort recursively breaks down the array and stores values!
+    </div>
+
+    <script>
+        let animationSteps = [];
+        let currentStep = 0;
+
+        // Tree structure for visualization
+        const treeData = {
+            id: 'node-0',
+            value: '[6,3,8,5]',
+            x: 400,
+            y: 50,
+            children: [
+                {
+                    id: 'node-1',
+                    value: '[6,3]',
+                    x: 250,
+                    y: 150,
+                    children: [
+                        { id: 'node-2', value: '[6]', x: 150, y: 250, children: [] },
+                        { id: 'node-3', value: '[3]', x: 350, y: 250, children: [] }
+                    ]
+                },
+                {
+                    id: 'node-4',
+                    value: '[8,5]',
+                    x: 550,
+                    y: 150,
+                    children: [
+                        { id: 'node-5', value: '[8]', x: 450, y: 250, children: [] },
+                        { id: 'node-6', value: '[5]', x: 650, y: 250, children: [] }
+                    ]
+                }
+            ]
+        };
+
+        // Generate animation steps
+        function generateSteps() {
+            animationSteps = [
+                {
+                    activeNode: 'node-0',
+                    callStack: [
+                        { id: 'frame-0', func: 'merge_sort([6,3,8,5])', vars: { arr: '[6,3,8,5]', mid: '2', left: '?', right: '?' } }
+                    ],
+                    explanation: 'Starting with array [6,3,8,5]. We need to split it in half.'
+                },
+                {
+                    activeNode: 'node-1',
+                    callStack: [
+                        { id: 'frame-0', func: 'merge_sort([6,3,8,5])', vars: { arr: '[6,3,8,5]', mid: '2', left: 'waiting...', right: '?' } },
+                        { id: 'frame-1', func: 'merge_sort([6,3])', vars: { arr: '[6,3]', mid: '1', left: '?', right: '?' } }
+                    ],
+                    explanation: 'Calling merge_sort([6,3]). This call must complete before we process the right side.'
+                },
+                {
+                    activeNode: 'node-2',
+                    callStack: [
+                        { id: 'frame-0', func: 'merge_sort([6,3,8,5])', vars: { arr: '[6,3,8,5]', mid: '2', left: 'waiting...', right: '?' } },
+                        { id: 'frame-1', func: 'merge_sort([6,3])', vars: { arr: '[6,3]', mid: '1', left: 'waiting...', right: '?' } },
+                        { id: 'frame-2', func: 'merge_sort([6])', vars: { arr: '[6]' } }
+                    ],
+                    explanation: 'Base case reached! [6] has only one element, so we return [6].'
+                },
+                {
+                    activeNode: 'node-1',
+                    callStack: [
+                        { id: 'frame-0', func: 'merge_sort([6,3,8,5])', vars: { arr: '[6,3,8,5]', mid: '2', left: 'waiting...', right: '?' } },
+                        { id: 'frame-1', func: 'merge_sort([6,3])', vars: { arr: '[6,3]', mid: '1', left: '[6] ✓', right: '?' } }
+                    ],
+                    explanation: 'Returned [6] and stored it in "left" variable of merge_sort([6,3]).'
+                },
+                {
+                    activeNode: 'node-3',
+                    callStack: [
+                        { id: 'frame-0', func: 'merge_sort([6,3,8,5])', vars: { arr: '[6,3,8,5]', mid: '2', left: 'waiting...', right: '?' } },
+                        { id: 'frame-1', func: 'merge_sort([6,3])', vars: { arr: '[6,3]', mid: '1', left: '[6] ✓', right: 'waiting...' } },
+                        { id: 'frame-3', func: 'merge_sort([3])', vars: { arr: '[3]' } }
+                    ],
+                    explanation: 'Now calling merge_sort([3]). Another base case!'
+                },
+                {
+                    activeNode: 'node-1',
+                    callStack: [
+                        { id: 'frame-0', func: 'merge_sort([6,3,8,5])', vars: { arr: '[6,3,8,5]', mid: '2', left: 'waiting...', right: '?' } },
+                        { id: 'frame-1', func: 'merge_sort([6,3])', vars: { arr: '[6,3]', mid: '1', left: '[6] ✓', right: '[3] ✓' } }
+                    ],
+                    explanation: 'Returned [3] and stored it in "right" variable. Now we can merge [6] and [3]!'
+                },
+                {
+                    activeNode: 'node-1',
+                    merge: true,
+                    mergeText: 'Merging [6] and [3] → [3,6]',
+                    callStack: [
+                        { id: 'frame-0', func: 'merge_sort([6,3,8,5])', vars: { arr: '[6,3,8,5]', mid: '2', left: 'waiting...', right: '?' } },
+                        { id: 'frame-1', func: 'merge_sort([6,3])', vars: { arr: '[6,3]', mid: '1', left: '[6] ✓', right: '[3] ✓', result: '[3,6]' } }
+                    ],
+                    explanation: 'merge([6], [3]) compares elements and returns [3,6].'
+                },
+                {
+                    activeNode: 'node-0',
+                    callStack: [
+                        { id: 'frame-0', func: 'merge_sort([6,3,8,5])', vars: { arr: '[6,3,8,5]', mid: '2', left: '[3,6] ✓', right: '?' } }
+                    ],
+                    explanation: 'merge_sort([6,3]) returned [3,6]! This value is now stored in "left" variable of the main call.'
+                },
+                {
+                    activeNode: 'node-4',
+                    callStack: [
+                        { id: 'frame-0', func: 'merge_sort([6,3,8,5])', vars: { arr: '[6,3,8,5]', mid: '2', left: '[3,6] ✓', right: 'waiting...' } },
+                        { id: 'frame-4', func: 'merge_sort([8,5])', vars: { arr: '[8,5]', mid: '1', left: '?', right: '?' } }
+                    ],
+                    explanation: 'Now processing the right side: merge_sort([8,5]).'
+                },
+                {
+                    activeNode: 'node-5',
+                    callStack: [
+                        { id: 'frame-0', func: 'merge_sort([6,3,8,5])', vars: { arr: '[6,3,8,5]', mid: '2', left: '[3,6] ✓', right: 'waiting...' } },
+                        { id: 'frame-4', func: 'merge_sort([8,5])', vars: { arr: '[8,5]', mid: '1', left: 'waiting...', right: '?' } },
+                        { id: 'frame-5', func: 'merge_sort([8])', vars: { arr: '[8]' } }
+                    ],
+                    explanation: 'Base case: [8] returns immediately.'
+                },
+                {
+                    activeNode: 'node-4',
+                    callStack: [
+                        { id: 'frame-0', func: 'merge_sort([6,3,8,5])', vars: { arr: '[6,3,8,5]', mid: '2', left: '[3,6] ✓', right: 'waiting...' } },
+                        { id: 'frame-4', func: 'merge_sort([8,5])', vars: { arr: '[8,5]', mid: '1', left: '[8] ✓', right: '?' } }
+                    ],
+                    explanation: '[8] is stored in "left" variable.'
+                },
+                {
+                    activeNode: 'node-6',
+                    callStack: [
+                        { id: 'frame-0', func: 'merge_sort([6,3,8,5])', vars: { arr: '[6,3,8,5]', mid: '2', left: '[3,6] ✓', right: 'waiting...' } },
+                        { id: 'frame-4', func: 'merge_sort([8,5])', vars: { arr: '[8,5]', mid: '1', left: '[8] ✓', right: 'waiting...' } },
+                        { id: 'frame-6', func: 'merge_sort([5])', vars: { arr: '[5]' } }
+                    ],
+                    explanation: 'Base case: [5] returns immediately.'
+                },
+                {
+                    activeNode: 'node-4',
+                    callStack: [
+                        { id: 'frame-0', func: 'merge_sort([6,3,8,5])', vars: { arr: '[6,3,8,5]', mid: '2', left: '[3,6] ✓', right: 'waiting...' } },
+                        { id: 'frame-4', func: 'merge_sort([8,5])', vars: { arr: '[8,5]', mid: '1', left: '[8] ✓', right: '[5] ✓' } }
+                    ],
+                    explanation: '[5] is stored in "right" variable. Ready to merge!'
+                },
+                {
+                    activeNode: 'node-4',
+                    merge: true,
+                    mergeText: 'Merging [8] and [5] → [5,8]',
+                    callStack: [
+                        { id: 'frame-0', func: 'merge_sort([6,3,8,5])', vars: { arr: '[6,3,8,5]', mid: '2', left: '[3,6] ✓', right: 'waiting...' } },
+                        { id: 'frame-4', func: 'merge_sort([8,5])', vars: { arr: '[8,5]', mid: '1', left: '[8] ✓', right: '[5] ✓', result: '[5,8]' } }
+                    ],
+                    explanation: 'merge([8], [5]) returns [5,8].'
+                },
+                {
+                    activeNode: 'node-0',
+                    callStack: [
+                        { id: 'frame-0', func: 'merge_sort([6,3,8,5])', vars: { arr: '[6,3,8,5]', mid: '2', left: '[3,6] ✓', right: '[5,8] ✓' } }
+                    ],
+                    explanation: 'Both left=[3,6] and right=[5,8] are ready! Time for the final merge.'
+                },
+                {
+                    activeNode: 'node-0',
+                    merge: true,
+                    mergeText: 'Final merge: [3,6] + [5,8] → [3,5,6,8]',
+                    callStack: [
+                        { id: 'frame-0', func: 'merge_sort([6,3,8,5])', vars: { arr: '[6,3,8,5]', mid: '2', left: '[3,6] ✓', right: '[5,8] ✓', result: '[3,5,6,8]' } }
+                    ],
+                    explanation: 'Final merge compares: 3<5 → [3], 6>5 → [3,5], 6<8 → [3,5,6], append 8 → [3,5,6,8]. Done!'
+                }
+            ];
+        }
+
+        function drawTree() {
+            const svg = document.getElementById('tree-svg');
+            svg.innerHTML = '';
+
+            // Draw connections
+            function drawConnections(node) {
+                node.children.forEach(child => {
+                    const line = document.createElement('div');
+                    line.className = 'connection';
+                    const dx = child.x - node.x;
+                    const dy = child.y - node.y;
+                    const length = Math.sqrt(dx*dx + dy*dy);
+                    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                    
+                    line.style.left = node.x + 'px';
+                    line.style.top = node.y + 25 + 'px';
+                    line.style.width = length + 'px';
+                    line.style.transform = `rotate(${angle}deg)`;
+                    svg.appendChild(line);
+                    
+                    drawConnections(child);
+                });
+            }
+
+            // Draw nodes
+            function drawNodes(node) {
+                const div = document.createElement('div');
+                div.className = 'tree-node';
+                div.id = node.id;
+                div.style.left = (node.x - 40) + 'px';
+                div.style.top = node.y + 'px';
+                div.innerHTML = `<div>${node.value}</div><div class="variables" id="${node.id}-vars"></div>`;
+                svg.appendChild(div);
+                
+                node.children.forEach(child => drawNodes(child));
+            }
+
+            drawConnections(treeData);
+            drawNodes(treeData);
+        }
+
+        function updateVisualization(step) {
+            const stepData = animationSteps[step];
+            
+            // Update active node
+            document.querySelectorAll('.tree-node').forEach(node => {
+                node.classList.remove('active', 'completed', 'pulsing');
+                if (node.id === stepData.activeNode) {
+                    node.classList.add('active', 'pulsing');
+                }
+            });
+
+            // Mark completed nodes
+            if (step >= 7) document.getElementById('node-1').classList.add('completed');
+            if (step >= 2) document.getElementById('node-2').classList.add('completed');
+            if (step >= 4) document.getElementById('node-3').classList.add('completed');
+            if (step >= 14) document.getElementById('node-4').classList.add('completed');
+            if (step >= 10) document.getElementById('node-5').classList.add('completed');
+            if (step >= 12) document.getElementById('node-6').classList.add('completed');
+            if (step >= 16) document.getElementById('node-0').classList.add('completed');
+
+            // Update call stack
+            const callStackDiv = document.getElementById('callStack');
+            callStackDiv.innerHTML = '';
+            
+            stepData.callStack.forEach((frame, index) => {
+                const frameDiv = document.createElement('div');
+                frameDiv.className = 'stack-frame';
+                if (index === stepData.callStack.length - 1) {
+                    frameDiv.classList.add('active');
+                }
+                
+                let varsHtml = '';
+                Object.entries(frame.vars).forEach(([key, value]) => {
+                    let valueClass = value.includes('✓') ? 'style="color: #2ecc71;"' : 
+                                   value.includes('?') ? 'style="color: #e74c3c;"' : 
+                                   value.includes('waiting') ? 'style="color: #f39c12;"' : '';
+                    varsHtml += `<div class="var">${key} = <span ${valueClass}>${value}</span></div>`;
+                });
+                
+                frameDiv.innerHTML = `
+                    <h3>${frame.func}</h3>
+                    ${varsHtml}
+                `;
+                callStackDiv.appendChild(frameDiv);
+            });
+
+            // Show merge animation
+            const mergeDisplay = document.getElementById('mergeDisplay');
+            if (stepData.merge) {
+                mergeDisplay.textContent = stepData.mergeText;
+                mergeDisplay.style.left = document.getElementById(stepData.activeNode).style.left;
+                mergeDisplay.style.top = (parseInt(document.getElementById(stepData.activeNode).style.top) + 60) + 'px';
+                mergeDisplay.classList.add('show');
+            } else {
+                mergeDisplay.classList.remove('show');
+            }
+
+            // Update explanation
+            document.getElementById('explanation').innerHTML = `<strong>Step ${step + 1}/${animationSteps.length}:</strong> ${stepData.explanation}`;
+        }
+
+        function stepForward() {
+            if (currentStep < animationSteps.length) {
+                updateVisualization(currentStep);
+                currentStep++;
+            } else {
+                // Loop back to beginning
+                currentStep = 0;
+                updateVisualization(currentStep);
+                currentStep++;
+            }
+        }
+
+        // Initialize
+        generateSteps();
+        drawTree();
+        updateVisualization(0);
+        currentStep = 1; // Start at 1 so first click shows step 1
+    </script>
+</body>
+</html>
